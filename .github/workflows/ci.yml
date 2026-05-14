@@ -1,0 +1,44 @@
+name: CI (playwright)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+  
+    steps:
+      - name: Pull code from repository (checkout)
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Create .env file
+        run: |
+          echo "BASE_URL=${{secrets.BASE_URL}}" >> .env
+          echo "EMAIL=${{secrets.EMAIL}}" >> .env
+          echo "PASSWORD=${{secrets.PASSWORD}}" >> .env
+
+      - name: Run Playwright tests
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_FILE: test-results/report.json
+        run: |
+          mkdir -p test-results
+
+          npx playwright test --project=chromium --reporter=line,json
